@@ -924,3 +924,7 @@ elseif(RTOS_FREERTOS_CHECK)
     endif()
 
 endif()
+ 
+if(NF_FEATURE_GRAPHICS)
+   add_subdirectory(src/CLR/Graphics)
+endif()
