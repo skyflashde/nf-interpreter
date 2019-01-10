@@ -5,41 +5,6 @@
 #
 #########################################################################
 
-function(Graphics CpuToGraphicsDisplay GraphicsDisplay)
-   add_subdirectory(src/CLR/GUI/Core/Graphics)
-   If(EXISTS "${CpuToGraphicsDisplay}")
-       Message(STATUS ,"\nCPU to Graphics display ${CpuToGraphicsDisplay}\n")
-       add_subdirectory("${CpuToGraphicsDisplay}")
-   else()
-        Message(FATAL_ERROR, "\nGraphics feature selected but no CPU to Graphics display found\n")
-   endif()
-   If(EXISTS "${GraphicsDisplay}")
-       Message(STATUS ,"\nGraphics display ${GraphicsDisplay}\n")
-       add_subdirectory(src/CLR/GUI/Core/Graphics)
-       add_subdirectory("${GraphicsDisplay}")
-   else()
-        Message(FATAL_ERROR, "\nGraphics feature selected but no Graphics display found\n")
-   endif()
-endfunction()
-
-function(Touch CpuToTouchSensor TouchSensor)
-   add_subdirectory(src/CLR/GUI/Core/TOUCH)
-   If(EXISTS "${CpuToTouchSensor}")
-       Message(STATUS ,"\n Cpu to Touch sensor ${CpuToTouchSensor}\n")
-       add_subdirectory(${CpuToTouchSensor})
-   else()
-        Message(FATAL_ERROR, "\nTouch feature selected but no cpu to touch sensor found\n")
-   endif()
-  
-     If(EXISTS "${TouchSensor}")
-       Message(STATUS ,"\nTouch sensor ${TouchSensor}")
-       add_subdirectory(${TouchSensor})
-   else()
-        Message(FATAL_ERROR, "\nTouch feature selected but no touch sensor found\n")
-   endif()
-endfunction()
-
-
 
 #########################################
 ## Support for alternateCMakeLists.cmake ##

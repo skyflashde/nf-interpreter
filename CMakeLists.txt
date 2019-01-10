@@ -321,6 +321,30 @@ else()
 endif()
 
 #################################################################
+# adds support for UI Graphics
+# (default is OFF so UI graphics is NOT supported)
+option(NF_FEATURE_UI_GRAPHICS "option to enable UI graphics support")
+
+if(NF_FEATURE_UI_GRAPHICS)
+    # Graphics(${CpuToGraphicsDisplay} ${GraphicsDisplay} )
+    message(STATUS "Support for UI graphics is included using ${UI_DISPLAY_DRIVER} driver")
+else()
+    message(STATUS "Support for UI graphics is NOT included")
+endif()
+
+#################################################################
+# adds support for UI Touch and Ink
+# (default is OFF so UI touch is NOT supported)
+option(NF_FEATURE_UI_TOUCH "option to enable UI touch support")
+
+if(NF_FEATURE_UI_TOUCH)
+    # Touch(${CpuToTouchSensor} ${TouchSensor} )
+    message(STATUS "Support for UI touch is included using ${UI_TOUCH_SENSOR} driver")
+else()
+    message(STATUS "Support for UI touch is NOT included")
+endif()
+
+#################################################################
 
 if(RTOS_CHIBIOS_CHECK)
 
@@ -926,19 +950,3 @@ elseif(RTOS_FREERTOS_CHECK)
     endif()
 
 endif()
-
-    #########################################
-    # Graphics - see CMakeUserFunctions.cmake
-    #########################################
-    if(NF_FEATURE_UI_GRAPHICS)
-         Graphics(${CpuToGraphicsDisplay} ${GraphicsDisplay} )
-    endif()
-
-    ##############################################
-    # Touch and Ink - see CMakeUserFunctions.cmake
-    ##############################################
-    if(NF_FEATURE_UI_TOUCH)
-         Message(STATUS, "\nTouch feature selected\n")
-         Touch(${CpuToTouchSensor} ${TouchSensor} )
-    endif()
-

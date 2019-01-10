@@ -53,6 +53,16 @@ if(NF_SECURITY_MBEDTLS)
     find_package(mbedTLS REQUIRED)
 endif()
 
+# nF feature: UI Graphics
+if(NF_FEATURE_UI_GRAPHICS)
+    find_package(NF_UI_Graphics REQUIRED)
+endif()
+
+# nF feature: UI Touch
+if(NF_FEATURE_UI_TOUCH)
+    find_package(NF_UI_Touch REQUIRED)
+endif()
+
 #######################################
 
 add_subdirectory("common")
@@ -124,8 +134,11 @@ add_executable(
     # sources for nanoFramework APIs
     "${TARGET_NANO_APIS_SOURCES}"
 
-    # sources for UI
-    "${UI_SOURCE}"
+    # sources for UI graphics
+    "${NF_UI_Graphics_SOURCES}"
+
+    # sources for UI touch
+    "${NF_UI_Touch_SOURCES}"
 )
 
 # add dependency from ChibiOS (this is required to make sure the ChibiOS repo is downloaded before the build starts)
@@ -197,9 +210,11 @@ target_include_directories(${NANOCLR_PROJECT_NAME}.elf PUBLIC
     "${NF_Networking_INCLUDE_DIRS}"
     "${mbedTLS_INCLUDE_DIRS}"
 
-    # UI Includes
-    "${UI_INCLUDES}"
+    # incudes for UI graphics
+    "${NF_UI_Graphics_INCLUDE_DIRS}"
 
+    # incudes for UI touch
+    "${NF_UI_Touch_INCLUDE_DIRS}"
 )
 
 # set compiler options
