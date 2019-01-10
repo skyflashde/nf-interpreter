@@ -254,7 +254,7 @@ set_property(TARGET ${NANOCLR_PROJECT_NAME}.elf APPEND_STRING PROPERTY LINK_FLAG
 if(${VISUAL_STUDIO})
     # CMAKE command add_custom_Command 'POST_BUILD' currently fails,  "CMD.EXE" not recognised
     # Use the CopyBuildOutput.cmd manually do the same thing
-elseif()
+else()
     # generate output files
     nf_generate_build_output_files(${NANOBOOTER_PROJECT_NAME}.elf)
     nf_generate_build_output_files(${NANOCLR_PROJECT_NAME}.elf)
