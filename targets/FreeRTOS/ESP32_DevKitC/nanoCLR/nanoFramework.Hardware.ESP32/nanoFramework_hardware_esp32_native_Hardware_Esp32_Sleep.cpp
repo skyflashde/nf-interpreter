@@ -93,6 +93,16 @@ HRESULT Library_nanoFramework_hardware_esp32_native_nanoFramework_Hardware_Esp32
     // ... and set power level to OFF
     g_CLR_HW_Hardware.m_powerLevel = PowerLevel__Off;
 
+    // no error here, always OK
+    stack.SetResult_I4( 0 ) ;
+
+    //////////////////////////////////////////////////////////
+    // developer notes:
+    // - the "goto sleep" is actually handled in ClrStartup() loop when calling CPU_SetPowerMode()
+    // - the execution engine has to exit the current thread execution to be able to check the reboot flags set above and shutdown gracefully
+    // - a clean approach to accomplish this is to add a Thread.Sleep(Inifinite) in the caller
+    //////////////////////////////////////////////////////////
+
     NANOCLR_NOCLEANUP_NOLABEL();
 }
 
