@@ -55,7 +55,7 @@ endif()
 # list of supported RTOSes
 # when adding a new RTOS add the corresponding string bellow AND...
 # ... also on the compare block bellow
-set(RTOS_SUPPORTED "CHIBIOS" "FREERTOS" CACHE INTERNAL "supported RTOS options")
+set(RTOS_SUPPORTED "CHIBIOS" "FREERTOS_ESP32" CACHE INTERNAL "supported RTOS options")
 
 list(FIND RTOS_SUPPORTED ${RTOS} RTOS_INDEX)
 if(RTOS_INDEX EQUAL -1)
@@ -65,18 +65,18 @@ else()
 endif()
 
 string(COMPARE EQUAL "CHIBIOS" "${RTOS}"  RTOS_CHIBIOS_CHECK)
-string(COMPARE EQUAL "FREERTOS" "${RTOS}" RTOS_FREERTOS_CHECK)
+string(COMPARE EQUAL "FREERTOS_ESP32" "${RTOS}" RTOS_FREERTOS_ESP32_CHECK)
 
 ##########################################################################
 
-if(RTOS_FREERTOS_CHECK)
-    set(RTOS_FREERTOS_CHECK TRUE)
+if(RTOS_FREERTOS_ESP32_CHECK)
+    set(RTOS_FREERTOS_ESP32_CHECK TRUE)
     set(RTOS_CHIBIOS_CHECK FALSE)
 endif()
 
 if(RTOS_CHIBIOS_CHECK)
     set(RTOS_CHIBIOS_CHECK TRUE)
-    set(RTOS_FREERTOS_CHECK FALSE)
+    set(RTOS_FREERTOS_ESP32_CHECK FALSE)
 endif()
 
 #######################
@@ -103,7 +103,7 @@ if(RTOS_CHIBIOS_CHECK)
     # set toolchain file
     set(CMAKE_TOOLCHAIN_FILE CMake/toolchain.ChibiOS.${TOOLCHAIN}.cmake)
 
-elseif(RTOS_FREERTOS_CHECK)
+elseif(RTOS_FREERTOS_ESP32_CHECK)
     message(STATUS "\nSetting Toolchain file for FreeRTOS ESP32 \n")
     set(CMAKE_TOOLCHAIN_FILE CMake/toolchain.FreeRtos.ESP32.${TOOLCHAIN}.cmake)
 
@@ -362,6 +362,12 @@ if(RTOS_CHIBIOS_CHECK)
     endif()
 
     #################################################################
+        
+    #################################################################
+    # enables use of ChibiOS Community contribution
+    # (default is OFF so ChibiOS Community is NOT included)
+    option(CHIBIOS_CONTRIB_REQUIRED "option to include ChibiOS Community contributions repository")
+    #################################################################
 
 endif()
 
@@ -393,20 +399,6 @@ endif()
 
 # set default option for SNTP to ON
 option(NF_NETWORKING_SNTP "option to use add SNTP support, requires networking otherwise has no effect" ON)
-
-#################################################################
-# enables filesysytem support in nanoCLR
-# (default is OFF so the filesystem is NOT supported)
-option(NF_FEATURE_USE_FILESYSTEM "option to use filesystem")
-
-if(NF_FEATURE_USE_FILESYSTEM)
-    set(USE_FILESYSTEM_OPTION TRUE CACHE INTERNAL "NF feature FILESYSTEM")
-    set(HAL_USE_SDC_OPTION TRUE CACHE INTERNAL "HAL SDC for NF_FEATURE_USE_FILESYSTEM")
-    message(STATUS "Support for filesystem enabled")
-else()
-    set(USE_FILESYSTEM_OPTION FALSE CACHE INTERNAL "NF feature FILESYSTEM")
-    set(HAL_USE_SDC_OPTION FALSE CACHE INTERNAL "HAL SDC for NF_FEATURE_USE_FILESYSTEM")
-endif()
 
 #################################################################
 
@@ -547,6 +539,21 @@ endif()
 
 
 #################################################################
+# enables filesysytem support in nanoCLR
+
+if(API_Windows.Storage)
+    set(USE_FILESYSTEM_OPTION TRUE CACHE INTERNAL "NF feature FILESYSTEM")
+    set(HAL_USE_SDC_OPTION TRUE CACHE INTERNAL "HAL SDC for USE_FILESYSTEM_OPTION")
+    message(STATUS "Support for filesystem enabled")
+else()
+    set(USE_FILESYSTEM_OPTION FALSE CACHE INTERNAL "NF feature FILESYSTEM")
+    set(HAL_USE_SDC_OPTION FALSE CACHE INTERNAL "HAL SDC for USE_FILESYSTEM_OPTION")
+endif()
+
+#################################################################
+
+
+#################################################################
 # RTC (real time clock) (default is OFF so RTC is NOT included)
 option(NF_FEATURE_RTC "option to use hardware RTC")
 
@@ -583,6 +590,14 @@ if(RTOS_CHIBIOS_CHECK)
     set(NO_CHIBIOS_SOURCE TRUE)
     if(NOT "${CHIBIOS_SOURCE}" STREQUAL "")
        set(NO_CHIBIOS_SOURCE FALSE)
+    endif()
+
+    # check if CHIBIOS-Contrib_SOURCE was specified or if it's empty (default is empty)
+    set(NO_CHIBIOS_CONTRIB_SOURCE TRUE)
+    if(CHIBIOS_CONTRIB_SOURCE)
+        if(NOT "${CHIBIOS_CONTRIB_SOURCE}" STREQUAL "")
+            set(NO_CHIBIOS_CONTRIB_SOURCE FALSE)
+        endif()
     endif()
 
     if(NO_CHIBIOS_SOURCE)
@@ -655,7 +670,10 @@ if(RTOS_CHIBIOS_CHECK)
             TIMEOUT 10
             LOG_DOWNLOAD 1
 
+            # install command has to perform TWO extracts
+            # in order to set multiple commands with INSTALL_COMMAND they have to be concatenated by a COMMAND keyword 
             INSTALL_COMMAND ${CMAKE_COMMAND} -E tar xvf ${PROJECT_BINARY_DIR}/ChibiOS_Source/ext/lwip-2.0.3-patched.7z WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/ChibiOS_Source/ext/
+                    COMMAND ${CMAKE_COMMAND} -E tar xvf ${PROJECT_BINARY_DIR}/ChibiOS_Source/ext/fatfs-0.13_patched.7z WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/ChibiOS_Source/ext/
 
             # Disable all other steps
             CONFIGURE_COMMAND ""
@@ -691,8 +709,11 @@ if(RTOS_CHIBIOS_CHECK)
             PREFIX ChibiOS
             SOURCE_DIR ${CMAKE_BINARY_DIR}/ChibiOS_Source
 
+            # install command has to perform TWO extracts
+            # in order to set multiple commands with INSTALL_COMMAND they have to be concatenated by a COMMAND keyword 
             INSTALL_COMMAND ${CMAKE_COMMAND} -E tar xvf ${PROJECT_BINARY_DIR}/ChibiOS_Source/ext/lwip-2.0.3-patched.7z WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/ChibiOS_Source/ext/
-
+                    COMMAND ${CMAKE_COMMAND} -E tar xvf ${PROJECT_BINARY_DIR}/ChibiOS_Source/ext/fatfs-0.13_patched.7z WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/ChibiOS_Source/ext/
+            
             # Disable all other steps
             CONFIGURE_COMMAND ""
             BUILD_COMMAND ""
@@ -701,6 +722,92 @@ if(RTOS_CHIBIOS_CHECK)
         # get source dir for ChibiOS CMake project
         ExternalProject_Get_Property(ChibiOS SOURCE_DIR)
 
+    endif()
+
+    if(CHIBIOS_CONTRIB_REQUIRED)
+        if(NO_CHIBIOS_CONTRIB_SOURCE)
+            # no CHIBIOS_CONTRIB source specified, download it from it's repo
+
+            # hack to make the FindGit to work in Windows platforms (check the module comment for details)
+            include(Hack_SetGitSearchPath)
+
+            # check for Git (needed here for advanced warning to user if it's not installed)
+            find_package(Git)
+
+            #  check if Git was found, if not report to user and abort
+            if(NOT GIT_EXECUTABLE)
+            message(FATAL_ERROR "error: could not find Git, make sure you have it installed.")
+            endif()
+
+            message(STATUS "ChibiOS-Contrib source from GitHub repo")
+
+            # need to setup a separate CMake project to download the code from the GitHub repository
+            # otherwise it won't be available before the actual build step
+            configure_file("CMake/ChibiOS-Contrib.CMakeLists.cmake.in"
+                        "${CMAKE_BINARY_DIR}/ChibiOS-Contrib_Download/CMakeLists.txt")
+
+            # setup CMake project for ChibiOS-Contrib download
+            execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
+                            RESULT_VARIABLE result
+                            WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/ChibiOS-Contrib_Download")
+
+            # run build on ChibiOS-Contrib download CMake project to perform the download
+            execute_process(COMMAND ${CMAKE_COMMAND} --build .
+                            RESULT_VARIABLE result
+                            WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/ChibiOS-Contrib_Download")
+
+            # add ChibiOS-Contrib as external project
+            ExternalProject_Add( 
+                ChibiOS-Contrib
+                PREFIX ChibiOS-Contrib
+                SOURCE_DIR ${CMAKE_BINARY_DIR}/ChibiOS-Contrib_Source
+                GIT_REPOSITORY  https://github.com/ChibiOS/ChibiOS-Contrib
+                GIT_SHALLOW 1   # download only the tip of the branch, not the complete history
+                TIMEOUT 10
+                LOG_DOWNLOAD 1
+                # Disable all other steps
+                INSTALL_COMMAND ""
+                CONFIGURE_COMMAND ""
+                BUILD_COMMAND ""
+            )        
+
+            # get source dir for ChibiOS-Contrib CMake project
+            ExternalProject_Get_Property(ChibiOS-Contrib SOURCE_DIR)
+
+        else()
+            # ChibiOS-Contrib source was specified
+
+            # sanity check is source path exists
+            if(EXISTS "${CHIBIOS_CONTRIB_SOURCE}/")
+                message(STATUS "ChibiOS-Contrib source from: ${CHIBIOS_CONTRIB_SOURCE}")
+
+                # check if we already have the sources, no need to copy again
+                if(NOT EXISTS "${CMAKE_BINARY_DIR}/ChibiOS-Contrib_Source")
+                    file(COPY "${CHIBIOS_CONTRIB_SOURCE}/" DESTINATION "${CMAKE_BINARY_DIR}/ChibiOS-Contrib_Source")
+                else()
+                    message(STATUS "Using local cache of ChibiOS-Contrib source from ${CHIBIOS_CONTRIB_SOURCE}")
+                endif()
+
+                set(CHIBIOS_INCLUDE_DIR ${CMAKE_BINARY_DIR}/ChibiOS_Source/include)
+            else()
+                message(FATAL_ERROR "Couldn't find ChibiOS-Contrib source at ${CHIBIOS_CONTRIB_SOURCE}/")
+            endif()
+
+            # add ChibiOS-Contrib as external project
+            ExternalProject_Add(
+                ChibiOS-Contrib
+                PREFIX ChibiOS-Contrib
+                SOURCE_DIR ${CMAKE_BINARY_DIR}/ChibiOS-Contrib_Source
+                # Disable all other steps
+                INSTALL_COMMAND ""
+                CONFIGURE_COMMAND ""
+                BUILD_COMMAND ""
+            )
+
+            # get source dir for ChibiOS-Contrib CMake project
+            ExternalProject_Get_Property(ChibiOS-Contrib SOURCE_DIR)
+
+        endif()
     endif()
 
     # if mbed TLS is enabled add it to the build
@@ -927,11 +1034,11 @@ if(RTOS_CHIBIOS_CHECK)
     endif()
 
 #######################
-# FreeRTOS
-elseif(RTOS_FREERTOS_CHECK)
+# FreeRTOS_ESP32
+elseif(RTOS_FREERTOS_ESP32_CHECK)
 
     if("${TARGET_SERIES}" STREQUAL "ESP32")
-        message(STATUS "Platform ESP32")
+        message(STATUS "Platform ESP32 target board: ${ESP32_BOARD}")
 
         # check watchdog feature
         # EPS32 build has watchdog enabled by default, so setting it to OFF doens't make sense 
@@ -941,12 +1048,12 @@ elseif(RTOS_FREERTOS_CHECK)
         endif()
 
         # Define base path for the class libraries
-        set(BASE_PATH_FOR_CLASS_LIBRARIES_MODULES "${PROJECT_SOURCE_DIR}/targets/FreeRTOS/ESP32_DevKitC/nanoCLR")
+        set(BASE_PATH_FOR_CLASS_LIBRARIES_MODULES "${PROJECT_SOURCE_DIR}/targets/FreeRTOS_ESP32/${ESP32_BOARD}/nanoCLR")
 
         # set target base location
-        set(TARGET_BASE_LOCATION "${PROJECT_SOURCE_DIR}/targets/FreeRTOS/ESP32_DevKitC")
+        set(TARGET_BASE_LOCATION "${PROJECT_SOURCE_DIR}/targets/FreeRTOS_ESP32/${ESP32_BOARD}")
+ 		add_subdirectory(targets/FreeRTOS_ESP32/${ESP32_BOARD})
 
- 		add_subdirectory(targets/FreeRTOS/ESP32_DevKitC)
     endif()
 
 endif()
