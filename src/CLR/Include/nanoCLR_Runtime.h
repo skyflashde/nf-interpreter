@@ -174,9 +174,12 @@ struct CLR_RT_FileStore
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-
+#if !defined(MAX)
 #define MAX(a,b)   (a > b      ? a : b)
+#endif
+#if !defined(MIN)
 #define MIN(a,b)   (a < b      ? a : b)
+#endif
 #define ABS(x)     (x > 0      ? x : (-x))
 #define FLOOR32(x) ((CLR_INT32)x)
 #define FRAC(x)    (x - FLOOR32(x))
@@ -2794,6 +2797,7 @@ struct CLR_RT_ExecutionEngine
     static const CLR_UINT32             c_Event_SerialPortIn        = 0x00000002;
     static const CLR_UINT32             c_Event_SerialPortOut       = 0x00000004;
     static const CLR_UINT32             c_Event_EndPoint            = 0x00000008;
+    static const CLR_UINT32             c_Event_StorageIo           = 0x00000020;
     static const CLR_UINT32             c_Event_I2cMaster           = 0x00000080;
     static const CLR_UINT32             c_Event_SpiMaster           = 0x00000100;
     static const CLR_UINT32             c_Event_OneWireMaster       = 0x00000200;
@@ -2818,6 +2822,7 @@ struct CLR_RT_ExecutionEngine
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     static const int                    c_fDebugger_StateInitialize          = 0x00000000;
+    static const int                    c_fDebugger_StateResolutionFailed    = 0x00000001;
     static const int                    c_fDebugger_StateProgramRunning      = 0x00000400;
     static const int                    c_fDebugger_StateProgramExited       = 0x00000800;
     static const int                    c_fDebugger_StateMask                = c_fDebugger_StateProgramRunning + c_fDebugger_StateProgramExited;

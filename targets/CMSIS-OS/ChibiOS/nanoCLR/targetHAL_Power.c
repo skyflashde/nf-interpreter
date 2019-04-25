@@ -13,12 +13,23 @@
 
 uint32_t WakeupReasonStore;
 
-inline void CPU_Reset(){ NVIC_SystemReset(); };
+inline void CPU_Reset()
+{ 
+    NVIC_SystemReset(); 
+};
 
-inline bool CPU_IsSoftRebootSupported() { return true; };
+inline bool CPU_IsSoftRebootSupported()
+{ 
+    return true; 
+};
 
 // CPU sleep is not currently implemented in this target
-inline void CPU_Sleep(SLEEP_LEVEL_type level, uint64_t wakeEvents) { (void)level; (void)wakeEvents;  };
+inline void CPU_Sleep(SLEEP_LEVEL_type level, uint64_t wakeEvents)
+{ 
+    (void)level;
+    (void)wakeEvents;
+
+};
 
 void CPU_SetPowerMode(PowerLevel_type powerLevel)
 {
@@ -47,7 +58,7 @@ void CPU_SetPowerMode(PowerLevel_type powerLevel)
           #elif defined(STM32F7XX)
             
             // only need to change this option bit if not already done
-            if(!(FLASH->OPTCR & ~FLASH_OPTCR_IWDG_STDBY))
+            if((FLASH->OPTCR & FLASH_OPTCR_IWDG_STDBY))
             {
                 // developer notes:
                 // follow workflow recommended @ 3.4.2 Option bytes programming (from programming manual)
@@ -76,6 +87,7 @@ void CPU_SetPowerMode(PowerLevel_type powerLevel)
                 // Set the OPTLOCK Bit to lock the FLASH Option Byte Registers access
                 FLASH->OPTCR |= FLASH_OPTCR_OPTLOCK;
             }
+            (void)success;
 
           #elif defined(STM32H7XX)
 
@@ -88,7 +100,10 @@ void CPU_SetPowerMode(PowerLevel_type powerLevel)
           #endif
 
             ///////////////////////////////////////////////////////
+            // set alarm interrupt enable
             // set power control register to: power down deep sleep
+            ///////////////////////////////////////////////////////
+
           #if defined(STM32F0XX) || defined(STM32F1XX) || defined(STM32F2XX) || \
             defined(STM32F3XX) ||defined(STM32F4XX) || defined(STM32L0XX) || defined(STM32L1XX)
             SET_BIT(RTC->CR, RTC_CR_ALRAIE);
@@ -96,7 +111,7 @@ void CPU_SetPowerMode(PowerLevel_type powerLevel)
           #endif
 
           #if defined(STM32F7XX)
-            CLEAR_BIT(PWR->CSR1, PWR_CSR1_WUIF);
+            SET_BIT(RTC->CR, RTC_CR_ALRAIE);
             SET_BIT(PWR->CR1, PWR_CR1_PDDS);
           #endif
 

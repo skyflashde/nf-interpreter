@@ -11,6 +11,9 @@
 #include <nanoPAL_BlockStorage.h>
 #include <nanoHAL_ConfigurationManager.h>
 
+void Storage_Initialize();
+void Storage_Uninitialize();
+
 //
 //  Reboot handlers clean up on reboot
 //
@@ -51,8 +54,12 @@ void nanoHAL_Initialize()
     HAL_CONTINUATION::InitializeList();
     HAL_COMPLETION  ::InitializeList();
 
+    BlockStorageList_Initialize();
+
     // initialize block storage devices
     BlockStorage_AddDevices();
+
+    BlockStorageList_InitializeDevices();
 
     // clear managed heap region
     unsigned char* heapStart = NULL;
@@ -64,6 +71,8 @@ void nanoHAL_Initialize()
     ConfigurationManager_Initialize();
 
     Events_Initialize();
+
+	Storage_Initialize();
 
     // no PAL events required until now
     //PalEvent_Initialize();
@@ -89,11 +98,19 @@ void nanoHAL_Uninitialize()
             break;
         }
     }   
-    
-    //PalEvent_Uninitialize();
 
+	Storage_Uninitialize();
+
+	SOCKETS_CloseConnections();
+
+  #if !defined(HAL_REDUCESIZE)
     // TODO need to call this but it's preventing the debug session from starting
     //Network_Uninitialize();
+  #endif
+ 
+    BlockStorageList_UnInitializeDevices();
+
+    //PalEvent_Uninitialize();
 
     Events_Uninitialize();
 
@@ -145,3 +162,8 @@ bool SystemState_Query(SYSTEM_STATE_type state)
 
     GLOBAL_UNLOCK(irq);
 }
+
+
+// Just in case storage is not configured
+__nfweak void Storage_Initialize() {};
+__nfweak void Storage_Uninitialize() {};
